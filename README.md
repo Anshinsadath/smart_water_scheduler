@@ -1,16 +1,21 @@
-# smart_water_scheduler
+# 🌱 Smart Water Scheduler
 
-A new Flutter project.
+Flutter application for scheduling plant watering with:
 
-## Getting Started
+- Local storage (Hive)
+- Firebase Firestore cloud sync
+- Local notifications
+- Analytics dashboard (charts)
+- Multi-device support
 
-This project is a starting point for a Flutter application.
+## Tech Stack
+- Flutter
+- Firebase
+- Hive
+- fl_chart
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Features
+- Add watering schedules
+- Daily reminders
+- Dashboard analytics
+- Cloud backup
