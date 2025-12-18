@@ -7,6 +7,7 @@ import 'dashboard_view.dart';
 import 'add_schedule_screen.dart';
 import 'logs_screen.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -18,25 +19,33 @@ class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
   final _screens = const [
-    DashboardView(), // ✅ USE ANALYTICS DASHBOARD
+    DashboardView(),
     AddScheduleScreen(),
     LogsScreen(),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _restoreFromCloud();
+bool _synced = false;
+
+@override
+void initState() {
+  super.initState();
+  _restoreFromCloud();
+}
+
+Future<void> _restoreFromCloud() async {
+  if (_synced) return;
+
+  final box = Hive.box<WaterSchedule>('schedules');
+  final cloudSchedules = await FirestoreService.fetchAll();
+
+  for (final s in cloudSchedules) {
+    box.put(s.id, s);
   }
 
-  Future<void> _restoreFromCloud() async {
-    final box = Hive.box<WaterSchedule>('schedules');
-    final cloudSchedules = await FirestoreService.fetchAll();
+  _synced = true;
+}
 
-    for (final s in cloudSchedules) {
-      box.put(s.id, s);
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {

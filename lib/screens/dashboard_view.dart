@@ -140,7 +140,9 @@ class DashboardView extends StatelessWidget {
     String? plant;
 
     for (var s in schedules) {
-      final parts = s.reminderTime.split(":");
+      final hour = s.reminderTime.hour;
+final minute = s.reminderTime.minute.toString().padLeft(2, '0');
+      final parts = ["$hour", minute];
       final t = DateTime(
         now.year,
         now.month,

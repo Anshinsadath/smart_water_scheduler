@@ -27,59 +27,66 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   }
 
   Future<void> _saveSchedule() async {
-    if (_plantController.text.isEmpty ||
-        _amountController.text.isEmpty ||
-        _selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Fill all fields")),
-      );
-      return;
-    }
-
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // ✅ SAFE, STABLE notification id
-    final notificationId = id.hashCode & 0x7fffffff;
-
-    final schedule = WaterSchedule(
-      id: id,
-      plantName: _plantController.text.trim(),
-      amount: double.parse(_amountController.text),
-      reminderTime:
-          "${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}",
-      createdAt: DateTime.now(),
-      notificationId: notificationId,
-    );
-
-    // 📦 LOCAL SAVE
-    final box = Hive.box<WaterSchedule>('schedules');
-    await box.put(id, schedule);
-
-    // ☁️ CLOUD BACKUP
-    await FirestoreService.saveSchedule(schedule);
-
-    // 🔔 NOTIFICATIONS (MOBILE ONLY)
-    if (!kIsWeb) {
-      await NotificationService.scheduleDaily(
-        id: notificationId,
-        title: "Water Reminder",
-        body:
-            "Time to water ${schedule.plantName} (${schedule.amount} ml)",
-        hour: _selectedTime!.hour,
-        minute: _selectedTime!.minute,
-      );
-    }
-
+  if (_plantController.text.isEmpty ||
+      _amountController.text.isEmpty ||
+      _selectedTime == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Schedule Saved")),
+      const SnackBar(content: Text("Fill all fields")),
     );
-
-    setState(() {
-      _plantController.clear();
-      _amountController.clear();
-      _selectedTime = null;
-    });
+    return;
   }
+
+  final now = DateTime.now();
+
+  // ✅ CREATE REAL DateTime (THIS WAS MISSING)
+  final reminderDateTime = DateTime(
+    now.year,
+    now.month,
+    now.day,
+    _selectedTime!.hour,
+    _selectedTime!.minute,
+  );
+
+  final id = DateTime.now().millisecondsSinceEpoch.toString();
+  final notificationId =
+      DateTime.now().millisecondsSinceEpoch.remainder(100000);
+
+  final schedule = WaterSchedule(
+    id: id,
+    plantName: _plantController.text.trim(),
+    amount: int.parse(_amountController.text),
+    reminderTime: reminderDateTime, // ✅ FIXED
+    createdAt: DateTime.now(),
+    notificationId: notificationId,
+  );
+
+  final box = Hive.box<WaterSchedule>('schedules');
+  await box.put(id, schedule);
+
+  // 🔥 Cloud backup
+  await FirestoreService.saveSchedule(schedule);
+
+  // 🔔 Notification (skip on web handled in service)
+  await NotificationService.scheduleDaily(
+    id: notificationId,
+    title: "Water Reminder",
+    body:
+        "Time to water ${schedule.plantName} (${schedule.amount} ml)",
+    hour: reminderDateTime.hour,
+    minute: reminderDateTime.minute,
+  );
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Schedule Saved")),
+  );
+
+  setState(() {
+    _plantController.clear();
+    _amountController.clear();
+    _selectedTime = null;
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {

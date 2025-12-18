@@ -19,8 +19,8 @@ class WaterScheduleAdapter extends TypeAdapter<WaterSchedule> {
     return WaterSchedule(
       id: fields[0] as String,
       plantName: fields[1] as String,
-      amount: fields[2] as double,
-      reminderTime: fields[3] as String,
+      amount: fields[2] as int,
+      reminderTime: fields[3] as DateTime,
       createdAt: fields[4] as DateTime,
       notificationId: fields[5] as int,
     );

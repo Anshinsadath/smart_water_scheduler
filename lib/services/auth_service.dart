@@ -1,26 +1,31 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  static final _auth = FirebaseAuth.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  static Future<User?> signInAnonymously() async {
-    try {
-      final userCred = await _auth.signInAnonymously();
-      return userCred.user;
-    } catch (e) {
-      // Firebase not available, return null
-      print('Auth sign in failed: $e');
-      return null;
-    }
+  // REGISTER
+  static Future<User?> register(String email, String password) async {
+    final cred = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return cred.user;
   }
 
-  static User? get currentUser {
-    try {
-      return _auth.currentUser;
-    } catch (e) {
-      // Firebase not available
-      print('Auth current user failed: $e');
-      return null;
-    }
+  // LOGIN
+  static Future<User?> login(String email, String password) async {
+    final cred = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return cred.user;
   }
+
+  // LOGOUT
+  static Future<void> logout() async {
+    await _auth.signOut();
+  }
+
+  // CURRENT USER
+  static User? get currentUser => _auth.currentUser;
 }
