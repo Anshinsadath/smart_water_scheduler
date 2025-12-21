@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'register_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -9,24 +11,19 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final email = TextEditingController();
-  final password = TextEditingController();
-  bool loading = false;
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
 
-  Future<void> login() async {
-    setState(() => loading = true);
+  Future<void> _login() async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email.text.trim(),
-        password: password.text.trim(),
+        email: emailCtrl.text.trim(),
+        password: passCtrl.text.trim(),
       );
-    } catch (e) {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email.text.trim(),
-        password: password.text.trim(),
-      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message ?? 'Login failed')));
     }
-    setState(() => loading = false);
   }
 
   @override
@@ -37,23 +34,19 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: email,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: password,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: loading ? null : login,
-              child: loading
-                  ? const CircularProgressIndicator()
-                  : const Text("Login / Register"),
-            ),
+            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: "Email")),
+            TextField(controller: passCtrl, decoration: const InputDecoration(labelText: "Password"), obscureText: true),
+            const SizedBox(height: 20),
+            ElevatedButton(onPressed: _login, child: const Text("Login")),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                );
+              },
+              child: const Text("Create new account"),
+            )
           ],
         ),
       ),

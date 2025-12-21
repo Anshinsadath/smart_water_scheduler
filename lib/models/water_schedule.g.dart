@@ -8,7 +8,7 @@ part of 'water_schedule.dart';
 
 class WaterScheduleAdapter extends TypeAdapter<WaterSchedule> {
   @override
-  final int typeId = 1;
+  final int typeId = 0;
 
   @override
   WaterSchedule read(BinaryReader reader) {
@@ -20,16 +20,15 @@ class WaterScheduleAdapter extends TypeAdapter<WaterSchedule> {
       id: fields[0] as String,
       plantName: fields[1] as String,
       amount: fields[2] as int,
-      reminderTime: fields[3] as DateTime,
+      reminderTime: fields[3] as String,
       createdAt: fields[4] as DateTime,
-      notificationId: fields[5] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, WaterSchedule obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -39,9 +38,7 @@ class WaterScheduleAdapter extends TypeAdapter<WaterSchedule> {
       ..writeByte(3)
       ..write(obj.reminderTime)
       ..writeByte(4)
-      ..write(obj.createdAt)
-      ..writeByte(5)
-      ..write(obj.notificationId);
+      ..write(obj.createdAt);
   }
 
   @override

@@ -1,27 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/water_schedule.dart';
 
 class FirestoreService {
-  static final _ref =
-      FirebaseFirestore.instance.collection('schedules');
+  static final _db = FirebaseFirestore.instance;
 
-  /// Fetch all schedules from cloud
+  static CollectionReference<Map<String, dynamic>> _ref() {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    return _db.collection('users').doc(uid).collection('schedules');
+  }
+
+  // ✅ Fetch all schedules for logged-in user
   static Future<List<WaterSchedule>> fetchAll() async {
-    final snap = await _ref.get();
+    final snap = await _ref().orderBy('createdAt', descending: true).get();
 
     return snap.docs
-        .map<WaterSchedule>((doc) =>
-            WaterSchedule.fromMap(doc.data()))
+        .map((d) => WaterSchedule.fromMap(d.data(), d.id))
         .toList();
   }
 
-  /// Save schedule to cloud
-  static Future<void> saveSchedule(WaterSchedule schedule) async {
-    await _ref.doc(schedule.id).set(schedule.toMap());
-  }
-
-  /// Delete schedule
-  static Future<void> deleteSchedule(String id) async {
-    await _ref.doc(id).delete();
+  // ✅ Save schedule
+  static Future<void> saveSchedule(WaterSchedule s) async {
+    await _ref().doc(s.id).set(s.toMap());
   }
 }
