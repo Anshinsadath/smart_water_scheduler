@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'water_schedule.g.dart';
 
@@ -27,24 +28,24 @@ class WaterSchedule {
     required this.createdAt,
   });
 
-  // 🔥 Firestore → Model
+  /// 🔥 Firestore → Model
   factory WaterSchedule.fromMap(Map<String, dynamic> map, String id) {
     return WaterSchedule(
       id: id,
       plantName: map['plantName'],
       amount: map['amount'],
       reminderTime: map['reminderTime'],
-      createdAt: DateTime.parse(map['createdAt']),
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
 
-  // 🔥 Model → Firestore
+  /// 🔥 Model → Firestore
   Map<String, dynamic> toMap() {
     return {
       'plantName': plantName,
       'amount': amount,
       'reminderTime': reminderTime,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt), // ✅ FIX
     };
   }
 }

@@ -19,14 +19,23 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
   bool _synced = false;
+  String? _lastUid;
 
-  final List<Widget> _screens = const [
-    DashboardView(),
-    AddScheduleScreen(),
-    LogsScreen(),
-  ];
+  late final List<Widget> _screens;
 
-  /// 🔤 Logged-in user name (always fresh)
+  @override
+  void initState() {
+    super.initState();
+
+    _screens = [
+      DashboardView(), // ❗ NOT const
+      const AddScheduleScreen(),
+      const LogsScreen(),
+    ];
+
+    _listenAuthAndRestore();
+  }
+
   String get userName {
     final user = FirebaseAuth.instance.currentUser;
     return user?.displayName?.isNotEmpty == true
@@ -34,37 +43,41 @@ class _HomeScreenState extends State<HomeScreen> {
         : user?.email ?? "User";
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _restoreFromCloud();
+  /// 🔐 Listen to auth changes
+  void _listenAuthAndRestore() {
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user == null) return;
+
+      if (_lastUid != user.uid) {
+        _synced = false;
+        _lastUid = user.uid;
+      }
+
+      if (!_synced) {
+        await _restoreFromCloud();
+      }
+    });
   }
 
   /// 🔁 Restore schedules from Firestore → Hive
-  /// ✅ Runs ONLY ONCE per login
   Future<void> _restoreFromCloud() async {
-    if (_synced) return;
-
     final box = Hive.box<WaterSchedule>('schedules');
+
     final cloudSchedules = await FirestoreService.fetchAll();
 
-    for (final schedule in cloudSchedules) {
-      box.put(schedule.id, schedule);
+    for (final s in cloudSchedules) {
+      box.put(s.id, s);
     }
 
     _synced = true;
-
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   /// 🔐 Logout
-  /// ✅ Clear local cache
-  /// ✅ Firebase sign out
-  /// ✅ AuthGate will redirect automatically
   Future<void> _logout() async {
     await Hive.box<WaterSchedule>('schedules').clear();
+    _synced = false;
+    _lastUid = null;
     await FirebaseAuth.instance.signOut();
   }
 
@@ -76,37 +89,22 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Smart Water Scheduler'),
-            Text(
-              "Hello, $userName",
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
+            Text("Hello, $userName", style: const TextStyle(fontSize: 14)),
           ],
         ),
         actions: [
-          /// 👤 Profile
           IconButton(
             icon: const Icon(Icons.person),
-            tooltip: "Profile",
             onPressed: () async {
               final updated = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
-
-              /// 🔁 Refresh ONLY if name changed
-              if (updated == true && mounted) {
-                setState(() {});
-              }
+              if (updated == true && mounted) setState(() {});
             },
           ),
-
-          /// 🚪 Logout
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: "Logout",
             onPressed: _logout,
           ),
         ],
@@ -116,18 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Add',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Logs',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Logs'),
         ],
       ),
     );

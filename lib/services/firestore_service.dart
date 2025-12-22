@@ -11,17 +11,18 @@ class FirestoreService {
     return _db.collection('users').doc(uid).collection('schedules');
   }
 
-  // ✅ Fetch all schedules for logged-in user
   static Future<List<WaterSchedule>> fetchAll() async {
-    final snap = await _ref().orderBy('createdAt', descending: true).get();
+    final snap = await _ref()
+        .orderBy('createdAt', descending: true)
+        .get();
 
     return snap.docs
         .map((d) => WaterSchedule.fromMap(d.data(), d.id))
         .toList();
   }
 
-  // ✅ Save schedule
   static Future<void> saveSchedule(WaterSchedule s) async {
     await _ref().doc(s.id).set(s.toMap());
   }
 }
+
